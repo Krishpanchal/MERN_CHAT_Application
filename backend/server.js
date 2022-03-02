@@ -6,6 +6,7 @@ const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const globalErrorHandler = require("./controllers/globalErrorHandler");
+const path = require("path");
 
 const app = express();
 dotenv.config({ path: "./config.env" });
@@ -21,6 +22,8 @@ const PORT = process.env.PORT || 5000;
 app.use("/api/users", userRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRoutes);
+
+console.log(process.env.NODE_ENV);
 
 const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
@@ -63,5 +66,15 @@ io.on("connection", (socket) => {
     });
   });
 });
+
+// ----------DEPLOYMENT-------------
+const __dirname1 = path.resolve();
+if (process.env.NODE_ENV == "PRODUCTION") {
+  app.use(express.static(path.join(__dirname1, "/frontend/build")));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname1, "frontend", "build", "index.html"));
+  });
+}
 
 app.use(globalErrorHandler);
