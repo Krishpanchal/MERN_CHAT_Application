@@ -69,7 +69,10 @@ io.on("connection", (socket) => {
 
 // ----------DEPLOYMENT-------------
 const __dirname1 = path.resolve();
-if (process.env.NODE_ENV == "PRODUCTION") {
+if (
+  process.env.NODE_ENV == "PRODUCTION" ||
+  process.env.NODE_ENV == "production"
+) {
   app.use(express.static(path.join(__dirname1, "/frontend/build")));
 
   app.get("*", (req, res) => {
