@@ -1,1 +1,1 @@
-web: SET NODE_ENV=PRODUCTION& node backend/server.js
+web: node backend/server.js
