@@ -1,25 +1,67 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const chats = require("./data/data");
+const connectDb = require("./config/db");
+const userRoutes = require("./routes/userRoutes");
+const chatRoutes = require("./routes/chatRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+const globalErrorHandler = require("./controllers/globalErrorHandler");
 
 const app = express();
-dotenv.config();
+dotenv.config({ path: "./config.env" });
+
+// Accept json data
+app.use(express.json());
+
+// Connect database
+connectDb();
 
 const PORT = process.env.PORT || 5000;
 
-app.get("/", (req, res) => {
-  console.log("API is running");
-});
+app.use("/api/users", userRoutes);
+app.use("/api/chats", chatRoutes);
+app.use("/api/messages", messageRoutes);
 
-app.get("/api/chats", (req, res) => {
-  res.send(chats);
-});
-
-app.get("/api/chats/:id", (req, res) => {
-  const singleChat = chats.find((chat) => chat._id === req.params.id);
-  res.send(singleChat);
-});
-
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+// Requiring socket.io which returns a function which needs to be called with the server parameter
+const io = require("socket.io")(server, {
+  pingTimeout: 60000,
+  cors: {
+    origin: "http://localhost:3000",
+  },
+});
+
+// Creating a connection
+io.on("connection", (socket) => {
+  console.log("Conneceted to socket.io");
+
+  socket.on("setup", (userData) => {
+    socket.join(userData._id);
+    socket.emit("connected");
+  });
+
+  socket.on("join chat", (room, user) => {
+    socket.join(room);
+    console.log(`${user.name} joined room ${room}`);
+  });
+
+  socket.on("typing", (room) => socket.in(room).emit("typing"));
+  socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
+
+  socket.on("new message", (message) => {
+    const chat = message.chat;
+
+    if (!chat?.users) return;
+
+    chat.users.forEach((user) => {
+      if (user._id == message.sender._id) return;
+
+      socket.in(user._id).emit("message recieved", message);
+    });
+  });
+});
+
+app.use(globalErrorHandler);
