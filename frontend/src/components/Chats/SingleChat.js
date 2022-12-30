@@ -18,7 +18,7 @@ import io from "socket.io-client";
 import Lottie from "react-lottie";
 import animationData from "../../animations/typing.json";
 
-const ENDPOINT = "https://krish-mern-chat-application.herokuapp.com/";
+const ENDPOINT = "https://chat-app-krish.onrender.com/";
 var socket, selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
